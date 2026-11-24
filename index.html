@@ -3,20 +3,268 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OGDC preview</title>
+  <title>Generative Video Compression via Optimization-Guided Diffusion</title>
   <style>
-    body { margin: 0; font-family: Georgia, serif; background: #111; color: #f3f3f3; }
-    main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
-    h1 { font-weight: normal; font-size: 1.6rem; margin-bottom: 0.3rem; }
-    p { color: #c8c8c8; line-height: 1.45; }
-    img { width: 100%; height: auto; background: #000; }
+    :root {
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #e7e5e4;
+      --paper: #f7f6f3;
+      --card: #ffffff;
+      --navy: #1e3a5f;
+      --navy-soft: #e8eef5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 17px;
+    }
+    .banner {
+      background: var(--navy);
+      color: #f8fafc;
+    }
+    .banner-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 18px 28px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .mark {
+      font-weight: 650;
+      letter-spacing: 0.18em;
+      font-size: 0.82rem;
+    }
+    nav { display: flex; gap: 18px; }
+    nav a {
+      color: #d6e0ec;
+      text-decoration: none;
+      font-size: 0.86rem;
+    }
+    nav a:hover { color: #fff; }
+    main { max-width: 1080px; margin: 0 auto; padding: 42px 28px 96px; }
+    h1 {
+      font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      font-weight: normal;
+      font-size: 2.45rem;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.6rem;
+    }
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 650;
+      margin: 2.8rem 0 0.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      margin: 2rem 0 0.85rem;
+      font-size: 0.76rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--navy);
+      font-weight: 700;
+    }
+    p { line-height: 1.65; margin: 0 0 0.9rem; }
+    a { color: var(--navy); }
+    figure { margin: 0 0 1.35rem; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    figcaption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+    figcaption > span { flex: 1; min-width: 0; }
+    img, video { display: block; width: 100%; height: auto; background: #fff; }
+    .controls { display: flex; align-items: center; gap: 10px; flex: none; }
+    label.frame {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: var(--muted);
+    }
+    label.frame input {
+      width: 4.6rem;
+      border: 1px solid #d6d3d1;
+      border-radius: 8px;
+      padding: 5px 8px;
+      font: 600 0.85rem/1 "Segoe UI", Helvetica, Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+    }
+    .transport {
+      flex: none;
+      border: 1px solid var(--navy);
+      background: var(--navy);
+      color: #fff;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font: 650 0.8rem/1 "Segoe UI", Helvetica, Arial, sans-serif;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+    }
+    .transport:hover { background: #16304f; }
+    .transport[aria-pressed="true"] { background: #fff; color: var(--navy); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+    th, td { padding: 0.55rem 0.7rem; text-align: right; border-bottom: 1px solid #f0eeec; }
+    th {
+      background: #f5f5f4;
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #44403c;
+      font-weight: 700;
+    }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    tr.ours td { background: var(--navy-soft); color: var(--navy); font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    @media (max-width: 720px) {
+      h1 { font-size: 1.85rem; }
+      .banner-inner, main { padding-left: 16px; padding-right: 16px; }
+      nav { display: none; }
+      figcaption { align-items: flex-start; flex-direction: column; }
+    }
   </style>
 </head>
 <body>
+  <div class="banner">
+    <div class="banner-inner">
+      <div class="mark">OGDC</div>
+      <nav>
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#comparisons">Comparisons</a>
+      </nav>
+    </div>
+  </div>
   <main>
-    <h1>OGDC preview</h1>
-    <p>BasketballDrive, first 25 frames. Ground truth, OGDC, YODA, GLC-Video, HM, and VTM are on the top two rows. DCVC-RT, DCVC-FM, and DCVC-UF are on the bottom row. The number on each panel is the rate of the full 96-frame sequence.</p>
-    <img src="basketball.gif" alt="Comparison of BasketballDrive reconstructions">
+    <h1>Generative Video Compression via Optimization-Guided Diffusion</h1>
+
+    <h2 id="abstract">Abstract</h2>
+    <p>We present OGDC, a training-free optimization-guided generative diffusion video compression method that operates at a few thousandths of a bit per pixel. A frozen Stable Video Diffusion model reconstructs each 24-frame chunk from four coded components: a generative keyframe, a low-resolution HEVC stream, a band-error header, and noise indices chosen from the source. A dead-zone-gated measurement update keeps HEVC coding error from driving the reconstruction, without modifying the pretrained diffusion model or training a codec.</p>
+    <p>On the first 96 frames of HEVC Class B, UVG, and MCL-JCV, resized to 1024&times;576, all four operating points lie below 0.007 bpp. Against VTM-17.0, OGDC gives the largest BD-rate saving on LPIPS and FID for every dataset, and on DISTS for two datasets. It also achieves lower DISTS, LPIPS, and FID than HM and the three evaluated DCVC codecs. Distortion-optimized codecs retain higher PSNR and MS-SSIM.</p>
+
+    <h2 id="method">How OGDC works</h2>
+    <p>OGDC does not train a codec, and it does not update the diffusion weights. The released Stable Video Diffusion prior is the model at test time, on every sequence. DCVC-RT, DCVC-FM, DCVC-UF, YODA, and GLC-Video are trained compression models. OGDC spends its bits on a keyframe, a low-resolution HEVC side stream, a short header, and a set of noise indices, then lets the frozen sampler reconstruct the chunk.</p>
+    <p>Each 96-frame clip is coded as four chunks of 24 frames. The sampler is started from the keyframe and the upsampled side information. A dead zone stops the measurement update from following HEVC error inside that band, so the update does not paint coding artifacts into the sample. From there, the coded noise selects the residual detail. The diffusion model itself stays the public checkpoint.</p>
+
+    <h2 id="results">Quantitative results</h2>
+    <p>The curves below are the perceptual rate&ndash;distortion plots from the paper. Lower LPIPS, DISTS, FID, and KID are better. LPIPS is the VGG network. OGDC's four points sit below 0.007 bpp. On LPIPS it stays below HM, VTM, and the three DCVC codecs. YODA and GLC-Video can record a lower DISTS or FID; those scores are computed on frames.</p>
+    <figure>
+      <figcaption>Perceptual rate&ndash;distortion curves on HEVC Class B, UVG, and MCL-JCV. Lower is better.</figcaption>
+      <img src="assets/rd_perceptual.png" alt="Perceptual rate-distortion curves">
+    </figure>
+    <p>The table is the BD-rate of those curves against VTM-17.0, in percent. A negative number is a rate saving. N/A means the two curves do not overlap, so a BD-rate is not defined. On UVG DISTS, GLC-Video (&minus;75.69) is slightly ahead of OGDC (&minus;74.34). On HEVC Class B and MCL-JCV, OGDC has no KID overlap with VTM.</p>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Dataset</th><th>Method</th><th>DISTS</th><th>LPIPS</th><th>KID</th><th>FID</th></tr>
+      </thead>
+      <tbody>
+        <tr><td rowspan="7">UVG</td><td>HM</td><td>+3.05</td><td>+19.02</td><td>+15.74</td><td>+7.85</td></tr>
+        <tr><td>DCVC-RT</td><td>+23.35</td><td>&minus;0.89</td><td>+32.02</td><td>+35.62</td></tr>
+        <tr><td>DCVC-FM</td><td>+20.87</td><td>&minus;0.71</td><td>+43.17</td><td>+46.62</td></tr>
+        <tr><td>DCVC-UF</td><td>&minus;17.56</td><td>&minus;34.56</td><td>&minus;14.83</td><td>&minus;9.12</td></tr>
+        <tr><td>GLC-Video</td><td>&minus;75.69</td><td>&minus;40.88</td><td>N/A</td><td>&minus;73.37</td></tr>
+        <tr><td>YODA</td><td>N/A</td><td>&minus;38.81</td><td>N/A</td><td>N/A</td></tr>
+        <tr class="ours"><td>OGDC</td><td>&minus;74.34</td><td>&minus;71.09</td><td>&minus;87.03</td><td>&minus;79.69</td></tr>
+        <tr><td rowspan="7">HEVC Class B</td><td>HM</td><td>+9.61</td><td>+26.96</td><td>&minus;1.01</td><td>+1.34</td></tr>
+        <tr><td>DCVC-RT</td><td>+10.65</td><td>&minus;3.96</td><td>+30.92</td><td>+24.43</td></tr>
+        <tr><td>DCVC-FM</td><td>+12.59</td><td>&minus;1.12</td><td>+44.62</td><td>+35.08</td></tr>
+        <tr><td>DCVC-UF</td><td>&minus;30.34</td><td>&minus;38.83</td><td>&minus;23.86</td><td>&minus;25.54</td></tr>
+        <tr><td>GLC-Video</td><td>N/A</td><td>&minus;50.29</td><td>N/A</td><td>N/A</td></tr>
+        <tr><td>YODA</td><td>N/A</td><td>&minus;54.89</td><td>N/A</td><td>N/A</td></tr>
+        <tr class="ours"><td>OGDC</td><td>&minus;86.57</td><td>&minus;77.08</td><td>N/A</td><td>&minus;88.95</td></tr>
+        <tr><td rowspan="7">MCL-JCV</td><td>HM</td><td>+6.12</td><td>+53.11</td><td>+30.84</td><td>+30.42</td></tr>
+        <tr><td>DCVC-RT</td><td>&minus;0.43</td><td>&minus;30.67</td><td>+8.40</td><td>+1.67</td></tr>
+        <tr><td>DCVC-FM</td><td>+10.27</td><td>&minus;18.79</td><td>+30.05</td><td>+25.06</td></tr>
+        <tr><td>DCVC-UF</td><td>&minus;28.29</td><td>&minus;45.45</td><td>&minus;37.67</td><td>&minus;37.06</td></tr>
+        <tr><td>GLC-Video</td><td>N/A</td><td>&minus;80.51</td><td>N/A</td><td>N/A</td></tr>
+        <tr><td>YODA</td><td>N/A</td><td>&minus;81.28</td><td>N/A</td><td>N/A</td></tr>
+        <tr class="ours"><td>OGDC</td><td>&minus;86.84</td><td>&minus;86.25</td><td>N/A</td><td>&minus;93.44</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="comparisons">Qualitative results</h2>
+    <p>The clips are the first 24 frames. Each panel is one codec, and the label is that codec's bitrate and LPIPS for the whole 96-frame sequence. Lower LPIPS is better. A red number is the lowest bpp or the lowest LPIPS in that clip. Ground truth has no score. The frame box holds every method on that frame, numbered 0 to 23. HM, VTM, and the DCVC codecs tend to keep a smooth picture and lose thin structure. YODA and GLC-Video put texture back. OGDC draws each 24-frame chunk from one frozen diffusion sample, steered by the coded keyframe, the side stream, and the noise indices.</p>
+
+    <h3>UVG</h3>
+    <figure class="clip">
+      <figcaption><span>UVG, Jockey. OGDC 0.0045 bpp, LPIPS 0.322.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/UVG_Jockey_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>UVG, Bosphorus. OGDC 0.0039 bpp, LPIPS 0.255.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/UVG_Bosphorus_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>UVG, YachtRide. OGDC 0.0042 bpp, LPIPS 0.310.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/UVG_YachtRide_first24.mp4"></video>
+    </figure>
+
+    <h3>MCL-JCV</h3>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC15. OGDC 0.0043 bpp, LPIPS 0.334.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC15_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC14. OGDC 0.0053 bpp, LPIPS 0.392.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC14_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC13. OGDC 0.0038 bpp, LPIPS 0.309.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC13_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC12. OGDC 0.0043 bpp, LPIPS 0.266.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC12_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC11. OGDC 0.0051 bpp, LPIPS 0.325.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC11_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC10. OGDC 0.0073 bpp, LPIPS 0.282.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC10_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC08. OGDC 0.0039 bpp, LPIPS 0.293.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC08_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC03. OGDC 0.0043 bpp, LPIPS 0.259.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC03_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>MCL-JCV, videoSRC01. OGDC 0.0040 bpp, LPIPS 0.243.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/MCL-JCV_videoSRC01_first24.mp4"></video>
+    </figure>
+
+    <h3>HEVC Class B</h3>
+    <figure class="clip">
+      <figcaption><span>HEVC Class B, ParkScene. OGDC 0.0043 bpp, LPIPS 0.399.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/HEVC_B_ParkScene_first24.mp4"></video>
+    </figure>
+    <figure class="clip">
+      <figcaption><span>HEVC Class B, BQTerrace. OGDC 0.0043 bpp, LPIPS 0.291.</span><button type="button" class="transport">Pause</button></figcaption>
+      <video muted playsinline loop preload="none" src="clips/HEVC_B_BQTerrace_first24.mp4"></video>
+    </figure>
   </main>
+  <script src="player.js"></script>
 </body>
 </html>
